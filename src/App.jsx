@@ -1,7 +1,8 @@
-import { useEffect, useReducer } from 'react';
-import { SlidersHorizontal, Monitor, Images, Sparkles, FileDown, ZoomIn, ZoomOut, Brain } from 'lucide-react';
+import { useEffect, useReducer, useState } from 'react';
+import { SlidersHorizontal, Monitor, Images, Sparkles, FileDown, ZoomIn, ZoomOut, Brain, HelpCircle } from 'lucide-react';
 import { LogoLegacyLockup } from './components/LogoLegacyMark';
 import { AiAdvisor } from './components/AiAdvisor';
+import { Tour } from './components/Tour';
 import { Wizard } from './components/Wizard';
 import { Gallery } from './components/Gallery';
 import { CanvasStage } from './components/CanvasStage';
@@ -80,8 +81,19 @@ function reducer(state, action) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [tourOpen, setTourOpen] = useState(false);
   useEffect(() => {
     dispatch({ type: 'GENERATE' });
+  }, []);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('logolegacy.tour-done')) {
+        const t = setTimeout(() => setTourOpen(true), 1400);
+        return () => clearTimeout(t);
+      }
+    } catch {
+      /* private mode */
+    }
   }, []);
 
   const active = state.concepts.find((c) => c.id === state.activeId) || null;
@@ -123,6 +135,14 @@ export default function App() {
           {/* Right: primary + secondary actions */}
           <div className="ml-auto flex items-center gap-2 lg:ml-0">
             <button
+              onClick={() => setTourOpen(true)}
+              title="Guided tour"
+              aria-label="Start guided tour"
+              className="rounded-lg border border-slate-700 bg-slate-900/80 p-1.5 text-slate-400 transition hover:border-slate-500 hover:text-slate-100"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => active && dispatch({ type: 'UI', patch: { kitOpen: true } })}
               disabled={!active}
               className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500 disabled:opacity-50"
@@ -131,6 +151,7 @@ export default function App() {
               Export
             </button>
             <button
+              data-tour="generate"
               onClick={() => {
                 dispatch({ type: 'GENERATE' });
                 dispatch({ type: 'UI', patch: { mobileTab: 'studio' } });
@@ -147,7 +168,7 @@ export default function App() {
 
       <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6">
         {/* Top-level tabs */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 flex gap-2" data-tour="mode-tabs">
           {[
             { id: 'design', label: 'Design', Icon: SlidersHorizontal },
             { id: 'studio', label: 'Studio', Icon: Monitor },
@@ -234,6 +255,8 @@ export default function App() {
         </div>
         )}
       </div>
+
+      {tourOpen && <Tour dispatch={dispatch} onClose={() => setTourOpen(false)} />}
 
       {state.ui.kitOpen && active && (
         <BrandKitModal concept={active} onClose={() => dispatch({ type: 'UI', patch: { kitOpen: false } })} />

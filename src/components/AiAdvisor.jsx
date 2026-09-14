@@ -136,7 +136,7 @@ export function AiAdvisor({ concept }) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-tour="ai-advisor">
       <div>
         <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
           <Brain className="h-4 w-4 text-indigo-400" />

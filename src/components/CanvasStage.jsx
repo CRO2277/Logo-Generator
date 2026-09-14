@@ -119,7 +119,7 @@ export function CanvasStage({ concept, ui, dispatch, saved }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-800/60">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-700/60 p-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-700/60 p-3" data-tour="canvas-toolbar">
         <div className="flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
           {BG_MODES.map((b) => (
             <button

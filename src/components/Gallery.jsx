@@ -12,7 +12,7 @@ export function Gallery({ concepts, dispatch }) {
 
   if (!concepts.length) {
     return (
-      <div className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-12 text-center">
+      <div className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-12 text-center" data-tour="gallery">
         <Bookmark className="mx-auto h-8 w-8 text-slate-600" />
         <h3 className="mt-3 text-sm font-semibold text-slate-200">Your gallery is empty</h3>
         <p className="mx-auto mt-1 max-w-xs text-xs text-slate-400">
@@ -42,7 +42,7 @@ export function Gallery({ concepts, dispatch }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="gallery">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
         <div>
           <h2 className="text-sm font-semibold text-slate-100">Gallery</h2>

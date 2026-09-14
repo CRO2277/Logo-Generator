@@ -4,7 +4,7 @@ import { LogoMark } from './LogoMark';
 export function ConceptGrid({ concepts, activeId, dispatch, savedIds = [] }) {
   if (!concepts.length) return null;
   return (
-    <div className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
+    <div className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4" data-tour="concept-grid">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
           {concepts.length} Generated Concepts
