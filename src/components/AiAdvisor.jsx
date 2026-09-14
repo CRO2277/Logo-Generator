@@ -3,6 +3,13 @@ import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, Ref
 import { FONTS } from '../data/brand';
 import { saveBlob, slug } from '../lib/export';
 
+// Keyless in-app generation engines (Pollinations) — ranked by text accuracy.
+const ENGINES = {
+  nano: { label: 'Nano Banana Pro', model: 'nanobanana-v2', note: 'best text accuracy, keyless' },
+  gpt: { label: 'GPT Image', model: 'gptimage', note: 'short strings' },
+  flux: { label: 'Flux', model: 'flux', note: 'fastest' },
+};
+
 const MODELS = {
   ideogram: { name: 'Ideogram 3.0 / 4.0', accuracy: '~90–95% wordmark accuracy', accent: '#4F46E5' },
   recraft: { name: 'Recraft V3 / V4', accuracy: 'Excellent, inconsistent on long strings', accent: '#06B6D4' },
@@ -92,6 +99,7 @@ export function AiAdvisor({ concept }) {
   const [imgUrl, setImgUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [engine, setEngine] = useState('nano');
   const promptRef = useRef(null);
 
   const task = TASKS.find((t) => t.id === taskId);
@@ -116,12 +124,15 @@ export function AiAdvisor({ concept }) {
     setTimeout(() => setCopied(''), 2500);
   };
 
-  // Free, keyless generation via Pollinations (Flux) — no account, no API key.
+  // Free, keyless generation via Pollinations — no account, no API key.
+  // Typographic-accuracy suffix steers every engine toward exact quoted spelling.
   const generate = () => {
     setFailed(false);
     setLoading(true);
+    const typographySuffix =
+      ' The text must be spelled exactly as quoted — clean, legible, professionally kerned typography with no misspelled or invented characters.';
     setImgUrl(
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1e6)}`
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + typographySuffix)}?width=1024&height=1024&nologo=true&model=${ENGINES[engine].model}&seed=${Math.floor(Math.random() * 1e6)}`
     );
   };
 
@@ -205,7 +216,17 @@ export function AiAdvisor({ concept }) {
         />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="max-w-[60%] text-[10px] leading-relaxed text-amber-300/90">{TIPS[modelId]}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={engine}
+              onChange={(e) => setEngine(e.target.value)}
+              title="In-app generation engine"
+              className="rounded-lg border border-slate-700 bg-slate-900/80 px-2 py-1.5 font-mono text-[10px] text-slate-300 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="nano">Nano Banana Pro · best text</option>
+              <option value="gpt">GPT Image · short strings</option>
+              <option value="flux">Flux · fastest</option>
+            </select>
             <button
               onClick={generate}
               disabled={loading}
@@ -231,7 +252,7 @@ export function AiAdvisor({ concept }) {
                 <div className="flex aspect-square items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
                   <span className="font-mono text-[10px] tracking-wider text-slate-400">
-                    Flux is rendering your concept…
+                    {ENGINES[engine].label} is rendering your concept…
                   </span>
                 </div>
               )}
@@ -270,8 +291,9 @@ export function AiAdvisor({ concept }) {
               </div>
             )}
             <p className="text-[10px] leading-relaxed text-slate-500">
-              Free raster preview via Flux (Pollinations) — no key or account needed. For ~90–95% wordmark spelling
-              accuracy, take the prompt to Ideogram's free web app, then vectorize the winner with Recraft.
+              Free raster preview via {ENGINES[engine].label} (Pollinations) — no key or account needed. For ~90–95%
+              wordmark spelling accuracy, take the prompt to Ideogram's free web app, then vectorize the winner with
+              Recraft.
             </p>
           </div>
         )}
