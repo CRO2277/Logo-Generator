@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
-import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, RefreshCw } from 'lucide-react';
+import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, RefreshCw, Bookmark } from 'lucide-react';
 import { FONTS } from '../data/brand';
 import { saveBlob, slug } from '../lib/export';
+import { PromptTemplatesGallery, tokenize, hydrate } from './PromptTemplates';
 
 // Keyless in-app generation engines (Pollinations) — ranked by text accuracy.
 const ENGINES = {
@@ -100,10 +101,49 @@ export function AiAdvisor({ concept }) {
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [engine, setEngine] = useState('nano');
+  const [templates, setTemplates] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('logolegacy.prompt-templates')) || [];
+    } catch {
+      return [];
+    }
+  });
+  const [templatePrompt, setTemplatePrompt] = useState(null);
+  const [savedFlash, setSavedFlash] = useState(false);
   const promptRef = useRef(null);
 
   const task = TASKS.find((t) => t.id === taskId);
   const prompt = useMemo(() => buildPrompt(modelId, concept), [modelId, concept]);
+  const effectivePrompt = templatePrompt ?? prompt;
+
+  const persistTemplates = (next) => {
+    setTemplates(next);
+    try {
+      localStorage.setItem('logolegacy.prompt-templates', JSON.stringify(next));
+    } catch {
+      /* private mode */
+    }
+  };
+
+  const saveTemplate = () => {
+    persistTemplates([
+      {
+        id: 'pt-' + Date.now(),
+        name: `${MODELS[modelId].name.split(' /')[0]} · ${task.label}`,
+        model: MODELS[modelId].name,
+        prompt: tokenize(effectivePrompt, concept?.name, concept?.tagline),
+        savedAt: Date.now(),
+      },
+      ...templates,
+    ]);
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1800);
+  };
+
+  const applyTemplate = (t) => {
+    setTemplatePrompt(hydrate(t.prompt, concept?.name || 'Your Brand', concept?.tagline || 'tagline'));
+    promptRef.current?.scrollIntoView({ block: 'center' });
+  };
 
   const pickTask = (id) => {
     setTaskId(id);
@@ -113,7 +153,7 @@ export function AiAdvisor({ concept }) {
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(effectivePrompt);
       setCopied('copied');
     } catch {
       // clipboard API unavailable (e.g. embedded frame) — select for manual copy
@@ -132,7 +172,7 @@ export function AiAdvisor({ concept }) {
     const typographySuffix =
       ' The text must be spelled exactly as quoted — clean, legible, professionally kerned typography with no misspelled or invented characters.';
     setImgUrl(
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + typographySuffix)}?width=1024&height=1024&nologo=true&model=${ENGINES[engine].model}&seed=${Math.floor(Math.random() * 1e6)}`
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(effectivePrompt + typographySuffix)}?width=1024&height=1024&nologo=true&model=${ENGINES[engine].model}&seed=${Math.floor(Math.random() * 1e6)}`
     );
   };
 
@@ -207,10 +247,24 @@ export function AiAdvisor({ concept }) {
             ))}
           </select>
         </div>
+        {templatePrompt && (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5">
+            <span className="text-[10px] text-amber-300">
+              Loaded from a saved template — your current brand name & tagline swapped in.
+            </span>
+            <button
+              onClick={() => setTemplatePrompt(null)}
+              className="shrink-0 text-[10px] font-semibold text-amber-300 underline-offset-2 hover:underline"
+            >
+              Back to auto-compose
+            </button>
+          </div>
+        )}
         <textarea
           ref={promptRef}
-          readOnly
-          value={prompt}
+          readOnly={!templatePrompt}
+          value={effectivePrompt}
+          onChange={(e) => setTemplatePrompt(e.target.value)}
           rows={5}
           className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950/70 p-3 font-mono text-[11px] leading-relaxed text-slate-200 focus:border-indigo-500 focus:outline-none"
         />
@@ -241,6 +295,14 @@ export function AiAdvisor({ concept }) {
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               {copied === 'copied' ? 'Copied' : copied === 'manual' ? 'Selected — ⌘/Ctrl+C' : 'Copy prompt'}
+            </button>
+            <button
+              onClick={saveTemplate}
+              title="Save this prompt as a reusable template"
+              className="flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-[11px] text-amber-300 transition hover:bg-amber-400/20"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {savedFlash ? 'Saved ✓' : 'Save template'}
             </button>
           </div>
         </div>
@@ -297,6 +359,22 @@ export function AiAdvisor({ concept }) {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Saved prompt templates */}
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <Bookmark className="h-3.5 w-3.5 text-amber-400" />
+            Saved Templates
+          </h3>
+          <span className="font-mono text-[10px] text-slate-500">{templates.length} on file</span>
+        </div>
+        <PromptTemplatesGallery
+          templates={templates}
+          onUse={applyTemplate}
+          onDelete={(id) => persistTemplates(templates.filter((t) => t.id !== id))}
+        />
       </div>
 
       {/* Model matrix */}
