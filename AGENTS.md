@@ -1,4 +1,4 @@
-# LogoForge — Logo Generator
+# LogoLegacy (logolegacy.pro) — Logo Generator
 
 Browser-only logo generator: React 19 + Vite 6. No backend, no database, no secrets.
 

@@ -87,7 +87,9 @@ export default function App() {
             <svg className="brand-icon" viewBox="0 0 24 24">
               <path d={BOLT} fill="#818CF8" />
             </svg>
-            <h1>LogoForge</h1>
+            <h1>
+              LogoLegacy<span className="tld">.pro</span>
+            </h1>
           </div>
           <nav className="nav-tabs" aria-label="Sections">
             <button className={view === 'studio' ? 'on' : ''} onClick={() => go('studio')}>
