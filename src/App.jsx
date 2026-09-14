@@ -1,12 +1,14 @@
 import { useEffect, useReducer } from 'react';
-import { Aperture, SlidersHorizontal, Monitor } from 'lucide-react';
+import { SlidersHorizontal, Monitor } from 'lucide-react';
 import { Wizard } from './components/Wizard';
 import { CanvasStage } from './components/CanvasStage';
 import { ConceptGrid } from './components/ConceptGrid';
 import { CustomizePanel } from './components/CustomizePanel';
 import { Mockups } from './components/Mockups';
 import { BrandKitModal } from './components/BrandKitModal';
+import { StyleEditor } from './components/StyleEditor';
 import { generateConcepts } from './lib/generate';
+import { FONTS } from './data/brand';
 
 const initialState = {
   wizard: {
@@ -38,6 +40,23 @@ function reducer(state, action) {
       };
     case 'SET_ACTIVE':
       return { ...state, activeId: action.id };
+    case 'APPLY_STYLE': {
+      const { titleFont, ...rest } = action.patch;
+      return {
+        ...state,
+        concepts: state.concepts.map((c) => {
+          const next = { ...c, ...rest };
+          if (titleFont) {
+            const f = FONTS.find((x) => x.id === titleFont);
+            next.titleFont = titleFont;
+            if (f && !f.weights.includes(next.titleWeight)) {
+              next.titleWeight = f.weights[Math.min(f.weights.length - 1, 2)];
+            }
+          }
+          return next;
+        }),
+      };
+    }
     case 'UI':
       return { ...state, ui: { ...state.ui, ...action.patch } };
     default:
@@ -58,13 +77,17 @@ export default function App() {
     <div className="min-h-screen">
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3.5 sm:px-6">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15">
-            <Aperture className="h-5 w-5 text-indigo-400" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500 font-bold text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5">
+              <text x="12" y="17.5" textAnchor="middle" fontSize="15" fontWeight="800" fontFamily="Inter, sans-serif" fill="currentColor">L</text>
+            </svg>
           </span>
           <div>
-            <h1 className="text-base font-semibold tracking-tight text-slate-100">VektorBrand</h1>
+            <h1 className="text-base font-semibold tracking-tight text-slate-100">
+              LogoLegacy<span className="font-normal text-slate-500">.pro</span>
+            </h1>
             <p className="hidden text-[11px] text-slate-400 sm:block">
-              Intelligent logo maker & brand identity generator
+              Logo & brand identity studio — free, instant, full-resolution files. No signup, no paywalls.
             </p>
           </div>
         </div>
@@ -107,6 +130,7 @@ export default function App() {
                 <div className="mb-4 flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
                   {[
                     { id: 'customize', label: 'Customize' },
+                    { id: 'style', label: 'Style Editor' },
                     { id: 'mockups', label: 'Mockups' },
                   ].map((t) => (
                     <button
@@ -122,6 +146,8 @@ export default function App() {
                 </div>
                 {state.ui.innerTab === 'customize' ? (
                   <CustomizePanel concept={active} dispatch={dispatch} />
+                ) : state.ui.innerTab === 'style' ? (
+                  <StyleEditor concepts={state.concepts} activeId={state.activeId} dispatch={dispatch} />
                 ) : (
                   <Mockups concept={active} />
                 )}

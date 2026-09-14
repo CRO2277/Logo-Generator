@@ -1,6 +1,8 @@
 // Export pipeline: production-ready SVG (subsetted Google Fonts embedded as
-// base64 @font-face, clean grouped paths, no inline styles) and high-res
-// square PNGs at 1024/2048/4096 with optional transparency.
+// base64 @font-face, clean grouped paths, no inline styles), high-res square
+// PNGs (1024/2048/4096) with transparency, logo variants (primary / mono /
+// reversed), and the brand-kit markdown summary. All primitives are shared
+// with the asset suite in assets.js.
 
 import { layoutLogo } from './layout';
 import { FONTS, LAYOUTS } from '../data/brand';
@@ -8,11 +10,11 @@ import { fmtColor } from './color';
 
 const PAD = 48;
 
-function slug(s) {
+export function slug(s) {
   return ((s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'brand';
 }
 
-function saveBlob(blob, filename) {
+export function saveBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -37,21 +39,20 @@ function primToSvg(p) {
   return `<text x="${p.x}" y="${p.y}" text-anchor="${p.anchor}" font-family="${p.family}" font-size="${p.size}" font-weight="${p.weight}" letter-spacing="${p.ls || 0}" fill="${p.fill}">${escapeXml(p.text)}</text>`;
 }
 
-function roundRectPath(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(x, y, w, h, r);
-  } else {
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
+// Logo color variants: 'color' (as designed), 'mono' (single ink for print),
+// 'reversed' (white for dark backgrounds).
+export function variantConcept(concept, variant = 'color') {
+  if (variant === 'mono') {
+    return { ...concept, colors: { icon: '#0F172A', title: '#0F172A', tag: '#0F172A', bg: '#FFFFFF' } };
   }
+  if (variant === 'reversed') {
+    return { ...concept, colors: { icon: '#FFFFFF', title: '#FFFFFF', tag: '#E2E8F0', bg: '#0F172A' } };
+  }
+  return concept;
 }
 
-function drawPrim(ctx, p) {
+// Draws one geometry primitive on a canvas (shared with asset suite).
+export function drawPrim(ctx, p) {
   if (p.t === 'path') {
     const path = new Path2D(p.d);
     ctx.save();
@@ -62,7 +63,18 @@ function drawPrim(ctx, p) {
     ctx.restore();
   } else if (p.t === 'rect') {
     ctx.fillStyle = p.fill;
-    roundRectPath(ctx, p.x, p.y, p.w, p.h, p.rx);
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(p.x, p.y, p.w, p.h, p.rx);
+    } else {
+      const r = p.rx;
+      ctx.moveTo(p.x + r, p.y);
+      ctx.arcTo(p.x + p.w, p.y, p.x + p.w, p.y + p.h, r);
+      ctx.arcTo(p.x + p.w, p.y + p.h, p.x, p.y + p.h, r);
+      ctx.arcTo(p.x, p.y + p.h, p.x, p.y, r);
+      ctx.arcTo(p.x, p.y, p.x + p.w, p.y, r);
+      ctx.closePath();
+    }
     ctx.fill();
   } else {
     ctx.fillStyle = p.fill;
@@ -91,7 +103,7 @@ async function fetchFontFace(cssName, weight, text) {
   return `@font-face{font-family:'${cssName}';font-weight:${weight};font-style:normal;src:url(data:font/woff2;base64,${btoa(bin)}) format('woff2');}`;
 }
 
-async function embedFonts(concept) {
+export async function embedFonts(concept) {
   const titleFont = FONTS.find((f) => f.id === concept.titleFont) || FONTS[0];
   const tagFont = FONTS.find((f) => f.id === concept.tagFont) || FONTS[0];
   const upper = concept.uppercase !== false;
@@ -108,29 +120,22 @@ async function embedFonts(concept) {
   return css.filter(Boolean).join('');
 }
 
-// --- Public API ---
-
-export async function downloadSvg(concept) {
-  let fontCss = '';
-  try {
-    fontCss = await embedFonts(concept);
-  } catch {
-    // Font embedding is best-effort; the file still exports with font-family refs.
-  }
+export function buildSvgString(concept, fontCss = '') {
   const { w, h, prims } = layoutLogo(concept);
   const W = w + PAD * 2;
   const H = h + PAD * 2;
   const style = fontCss ? `<style>${fontCss}</style>` : '';
-  const svg =
+  return (
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
     style +
     `<g transform="translate(${PAD} ${PAD})">${prims.map(primToSvg).join('')}</g>` +
-    `</svg>`;
-  saveBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${slug(concept.name)}-logo.svg`);
+    `</svg>`
+  );
 }
 
-export async function downloadPng(concept, size = 1024, transparent = true) {
+// Square canvas with the logo centered (used by PNG export and the ZIP kit).
+export function renderLogoCanvas(concept, size = 1024, transparent = true) {
   const { w, h, prims } = layoutLogo(concept);
   const cv = document.createElement('canvas');
   cv.width = size;
@@ -145,11 +150,33 @@ export async function downloadPng(concept, size = 1024, transparent = true) {
   ctx.translate((size - w * s) / 2, (size - h * s) / 2);
   ctx.scale(s, s);
   for (const p of prims) drawPrim(ctx, p);
-  const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
-  saveBlob(blob, `${slug(concept.name)}-${size}.png`);
+  return cv;
 }
 
-export function downloadBrandKit(concept) {
+async function canvasBlob(cv) {
+  return new Promise((r) => cv.toBlob(r, 'image/png'));
+}
+
+// --- Public API ---
+
+export async function downloadSvg(concept, variant = 'color') {
+  const c = variantConcept(concept, variant);
+  let fontCss = '';
+  try {
+    fontCss = await embedFonts(c);
+  } catch {
+    // Font embedding is best-effort; the file still exports with font-family refs.
+  }
+  saveBlob(new Blob([buildSvgString(c, fontCss)], { type: 'image/svg+xml;charset=utf-8' }), `${slug(c.name)}-logo${variant !== 'color' ? `-${variant}` : ''}.svg`);
+}
+
+export async function downloadPng(concept, size = 1024, transparent = true, variant = 'color') {
+  const c = variantConcept(concept, variant);
+  const blob = await canvasBlob(renderLogoCanvas(c, size, transparent));
+  saveBlob(blob, `${slug(c.name)}-logo${variant !== 'color' ? `-${variant}` : ''}-${size}.png`);
+}
+
+export function brandKitMd(concept) {
   const titleFont = FONTS.find((f) => f.id === concept.titleFont) || FONTS[0];
   const tagFont = FONTS.find((f) => f.id === concept.tagFont) || FONTS[0];
   const layout = LAYOUTS.find((l) => l.id === concept.layout) || LAYOUTS[0];
@@ -157,7 +184,7 @@ export function downloadBrandKit(concept) {
     const f = fmtColor(concept.colors?.[k] || '#000000');
     return `- **${k}**: ${f.hex} · rgb(${f.rgb}) · hsl(${f.hsl})`;
   });
-  const md = [
+  return [
     `# ${concept.name || 'Brand'} — Brand Kit`,
     '',
     '## Colors (HEX · RGB · HSL)',
@@ -172,8 +199,14 @@ export function downloadBrandKit(concept) {
     `- Alignment: ${concept.align}`,
     `- Icon scale: ${Math.round((concept.iconScale ?? 1) * 100)}% · icon-to-text gap: ${Math.round((concept.gap ?? 1) * 100)}%`,
     '',
+    '## Variants',
+    '- Primary (color), Monochrome (print, single ink), Reversed (white, for dark backgrounds)',
+    '',
     '---',
-    'Generated with VektorBrand.',
+    'Generated with LogoLegacy (logolegacy.pro) — free, instant, full-resolution brand files.',
   ].join('\n');
-  saveBlob(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${slug(concept.name)}-brand-kit.md`);
+}
+
+export function downloadBrandKit(concept) {
+  saveBlob(new Blob([brandKitMd(concept)], { type: 'text/markdown;charset=utf-8' }), `${slug(concept.name)}-brand-kit.md`);
 }

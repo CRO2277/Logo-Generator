@@ -7,7 +7,7 @@ export function ConceptGrid({ concepts, activeId, dispatch }) {
     <div className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-          6 Generated Concepts
+          {concepts.length} Generated Concepts
         </h3>
         <button
           onClick={() => dispatch({ type: 'GENERATE' })}

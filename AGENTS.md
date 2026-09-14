@@ -1,4 +1,4 @@
-# VektorBrand — Logo & Brand Identity Studio
+# LogoLegacy (logolegacy.pro) — Logo & Brand Identity Studio
 
 Browser-only logo maker: React 19 + Vite 6 + Tailwind CSS v4 + lucide-react. No backend, no database, no secrets.
 

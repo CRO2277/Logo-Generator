@@ -92,6 +92,17 @@ export function Wizard({ wizard, dispatch }) {
           maxLength={32}
           className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
         />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {(NICHES.find((n) => n.id === wizard.niche)?.taglines || []).map((t) => (
+            <button
+              key={t}
+              onClick={() => set({ tagline: t })}
+              className="rounded-full border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-[10px] text-slate-400 transition hover:border-indigo-500 hover:text-indigo-300"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
       </Section>
 
       <Section step="3" title="Business Niche">

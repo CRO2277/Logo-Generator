@@ -1,4 +1,4 @@
-import { Smartphone, CreditCard, Globe, Shirt, ShoppingBag } from 'lucide-react';
+import { Smartphone, CreditCard, Globe, Shirt, ShoppingBag, AtSign } from 'lucide-react';
 import { LogoMark } from './LogoMark';
 import { ICONS } from '../data/brand';
 import { contrastText } from '../lib/color';
@@ -63,6 +63,17 @@ export function Mockups({ concept }) {
             <span>Services</span>
             <span>Contact</span>
           </div>
+        </div>
+      </MockupCard>
+
+      <MockupCard icon={AtSign} title="Social Avatar">
+        <div
+          className="flex h-24 w-24 items-center justify-center rounded-full ring-4 ring-slate-700/60"
+          style={{ background: concept.colors?.icon || '#4F46E5' }}
+        >
+          <svg viewBox="0 0 24 24" className="h-12 w-12">
+            <path d={icon.d} fill={markContrast} fillRule={icon.fr || 'nonzero'} />
+          </svg>
         </div>
       </MockupCard>
 

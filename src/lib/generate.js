@@ -1,5 +1,6 @@
 // Intelligent concept generation: pairs niches with personality traits to
-// produce six mathematically varied but on-brief logo concepts.
+// produce twelve mathematically varied but on-brief logo concepts —
+// more first-pass variety than any competitor.
 
 import { PALETTES, NICHES, PERSONALITIES, LAYOUTS, FONTS } from '../data/brand';
 
@@ -14,18 +15,21 @@ export function generateConcepts(w) {
 
   const colorsFor = (i) => {
     if (w.paletteId === 'custom' && i < 2) return { ...w.custom };
-    const off = w.paletteId === 'custom' || i < 2 ? (w.paletteId === 'custom' ? i : 0) : i;
+    const off = i < 2 ? 0 : i;
     const p = PALETTES[(palIdx + off) % PALETTES.length];
     return { icon: p.icon, title: p.title, tag: p.tag, bg: p.bg };
   };
 
-  return Array.from({ length: 6 }, (_, i) => {
+  return Array.from({ length: 12 }, (_, i) => {
     const layout = i === 0 ? layoutIds[startIdx] : layoutIds[(startIdx + i) % layoutIds.length];
-    const icon = niche.icons[(seed + i * 2) % niche.icons.length];
-    const titleFontId = i % 2 === 1 ? pers.fonts[(seed + i) % pers.fonts.length] : niche.fonts.title;
+    const icon = niche.icons[(seed + i * 3) % niche.icons.length];
+    const fontPool = i % 3 === 2 ? pers.fonts : [niche.fonts.title, ...pers.fonts];
+    const titleFontId = fontPool[(seed + i) % fontPool.length];
     const tagFontId = pers.id === 'bold' && i % 2 === 0 ? 'jetbrainsMono' : niche.fonts.tag;
     const tf = FONTS.find((f) => f.id === titleFontId) || FONTS[0];
-    const titleWeight = Math.min(pers.weight, tf.weights[tf.weights.length - 1]);
+    const baseWeight = i % 2 === 0 ? pers.weight : Math.max(tf.weights[0], pers.weight - 100);
+    const titleWeight = Math.min(baseWeight, tf.weights[tf.weights.length - 1]);
+    const trackBase = i % 3 === 2 ? Math.max(-0.02, pers.track - 0.02) : pers.track;
     return {
       id: `c${i}-${ts}`,
       name: w.name,
@@ -36,7 +40,7 @@ export function generateConcepts(w) {
       tagFont: tagFontId,
       titleWeight,
       tagWeight: 600,
-      trackEm: i % 2 === 0 ? pers.track : Math.round((pers.track + 0.02) * 100) / 100,
+      trackEm: Math.round((trackBase + (i % 2 === 1 ? 0.02 : 0)) * 100) / 100,
       iconScale: 1,
       gap: 1,
       uppercase: true,

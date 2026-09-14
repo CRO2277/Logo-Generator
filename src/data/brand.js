@@ -45,13 +45,13 @@ export const PALETTES = [
 ];
 
 export const NICHES = [
-  { id: 'tech', label: 'Technology / SaaS', icons: ['bolt', 'hexagon', 'grid', 'sparkle', 'chat'], fonts: { title: 'spaceGrotesk', tag: 'jetbrainsMono' } },
-  { id: 'commerce', label: 'Commerce & Retail', icons: ['tag', 'chat', 'diamond', 'grid', 'sparkle'], fonts: { title: 'outfit', tag: 'inter' } },
-  { id: 'professional', label: 'Professional & Legal', icons: ['shield', 'briefcase', 'crown', 'eye'], fonts: { title: 'plusJakarta', tag: 'inter' } },
-  { id: 'health', label: 'Health & Wellness', icons: ['pulse', 'heart', 'drop', 'leaf'], fonts: { title: 'plusJakarta', tag: 'inter' } },
-  { id: 'hospitality', label: 'Hospitality & Food', icons: ['cup', 'leaf', 'heart', 'drop'], fonts: { title: 'playfair', tag: 'inter' } },
-  { id: 'creative', label: 'Creative & Media', icons: ['pen', 'sparkle', 'eye', 'wave', 'mountain'], fonts: { title: 'syne', tag: 'inter' } },
-  { id: 'industrial', label: 'Industrial & Trades', icons: ['mountain', 'house', 'hexagon', 'bolt', 'shield'], fonts: { title: 'spaceGrotesk', tag: 'inter' } },
+  { id: 'tech', label: 'Technology / SaaS', icons: ['bolt', 'hexagon', 'grid', 'sparkle', 'chat'], fonts: { title: 'spaceGrotesk', tag: 'jetbrainsMono' }, taglines: ['build the future', 'software, simplified', 'ship smarter'] },
+  { id: 'commerce', label: 'Commerce & Retail', icons: ['tag', 'chat', 'diamond', 'grid', 'sparkle'], fonts: { title: 'outfit', tag: 'inter' }, taglines: ['shop the difference', 'quality you can trust', 'everyday essentials'] },
+  { id: 'professional', label: 'Professional & Legal', icons: ['shield', 'briefcase', 'crown', 'eye'], fonts: { title: 'plusJakarta', tag: 'inter' }, taglines: ['counsel you can count on', 'precision. integrity. results.', 'trusted advisors'] },
+  { id: 'health', label: 'Health & Wellness', icons: ['pulse', 'heart', 'drop', 'leaf'], fonts: { title: 'plusJakarta', tag: 'inter' }, taglines: ['care that puts you first', 'wellness, reimagined', 'your health, our mission'] },
+  { id: 'hospitality', label: 'Hospitality & Food', icons: ['cup', 'leaf', 'heart', 'drop'], fonts: { title: 'playfair', tag: 'inter' }, taglines: ['taste the moment', 'gather around', 'crafted with love'] },
+  { id: 'creative', label: 'Creative & Media', icons: ['pen', 'sparkle', 'eye', 'wave', 'mountain'], fonts: { title: 'syne', tag: 'inter' }, taglines: ['design that speaks', 'ideas made visible', 'craft beyond convention'] },
+  { id: 'industrial', label: 'Industrial & Trades', icons: ['mountain', 'house', 'hexagon', 'bolt', 'shield'], fonts: { title: 'spaceGrotesk', tag: 'inter' }, taglines: ['built to last', 'strength in every detail', 'where things get made'] },
 ];
 
 export const PERSONALITIES = [
