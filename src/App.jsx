@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react';
-import { SlidersHorizontal, Monitor, Images, Sparkles, FileDown, ZoomIn, ZoomOut } from 'lucide-react';
+import { SlidersHorizontal, Monitor, Images, Sparkles, FileDown, ZoomIn, ZoomOut, Brain } from 'lucide-react';
 import { LogoLegacyLockup } from './components/LogoLegacyMark';
+import { AiAdvisor } from './components/AiAdvisor';
 import { Wizard } from './components/Wizard';
 import { Gallery } from './components/Gallery';
 import { CanvasStage } from './components/CanvasStage';
@@ -151,6 +152,7 @@ export default function App() {
             { id: 'design', label: 'Design', Icon: SlidersHorizontal },
             { id: 'studio', label: 'Studio', Icon: Monitor },
             { id: 'gallery', label: 'Gallery', Icon: Images },
+            { id: 'ai', label: 'AI Assist', Icon: Brain },
           ].map(({ id, label, Icon }) => (
             <button
               key={id}
@@ -169,6 +171,8 @@ export default function App() {
 
         {galleryMode ? (
           <Gallery concepts={state.gallery} dispatch={dispatch} />
+        ) : mt === 'ai' ? (
+          <AiAdvisor concept={active} />
         ) : (
         <div className="flex flex-col items-start gap-5 lg:flex-row">
           {/* Wizard sidebar */}
