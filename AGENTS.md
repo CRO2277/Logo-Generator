@@ -18,6 +18,7 @@ docker compose -f docker-compose.base44.yml up -d
 - `src/lib/layout.js` — single source of geometry: turns a config into primitives (path/rect/text) in a content box. The SVG preview and both exporters consume it, so preview always matches export. Text is measured with a canvas 2D context (respects letter-spacing).
 - `src/lib/export.js` — SVG export (embeds subsetted Google Fonts as base64 `@font-face`, best-effort) and PNG export (canvas 2x, transparent background).
 - `src/lib/variants.js` — deterministic variation generator + shuffle.
+- `src/lib/gallery.js` + `src/components/Gallery.jsx` — saved logos (`logoforge:gallery` in localStorage); gallery view is hash-routed (`#/gallery`), studio is `#/`.
 - `src/components/Controls.jsx`, `src/components/LogoMark.jsx`, `src/App.jsx`.
 
 ## Quirks
