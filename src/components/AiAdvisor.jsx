@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, RefreshCw, Bookmark } from 'lucide-react';
+import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, RefreshCw, Bookmark, Crown, Trash2, Images, Layers } from 'lucide-react';
 import { FONTS } from '../data/brand';
 import { saveBlob, slug } from '../lib/export';
 import { PromptTemplatesGallery, tokenize, hydrate } from './PromptTemplates';
@@ -97,8 +97,8 @@ export function AiAdvisor({ concept }) {
   const [taskId, setTaskId] = useState('wordmark');
   const [modelId, setModelId] = useState('ideogram');
   const [copied, setCopied] = useState(''); // '' | 'copied' | 'manual'
-  const [imgUrl, setImgUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [variants, setVariants] = useState([]);
+  const [winnerId, setWinnerId] = useState(null);
   const [failed, setFailed] = useState(false);
   const [engine, setEngine] = useState('nano');
   const [templates, setTemplates] = useState(() => {
@@ -166,21 +166,43 @@ export function AiAdvisor({ concept }) {
 
   // Free, keyless generation via Pollinations — no account, no API key.
   // Typographic-accuracy suffix steers every engine toward exact quoted spelling.
-  const generate = () => {
+  // Each batch spawns `count` parallel requests with distinct seeds.
+  const pending = variants.filter((v) => v.loaded === undefined).length;
+
+  const generate = (count = 1) => {
     setFailed(false);
-    setLoading(true);
     const typographySuffix =
       ' The text must be spelled exactly as quoted — clean, legible, professionally kerned typography with no misspelled or invented characters.';
-    setImgUrl(
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(effectivePrompt + typographySuffix)}?width=1024&height=1024&nologo=true&model=${ENGINES[engine].model}&seed=${Math.floor(Math.random() * 1e6)}`
+    const batch = Array.from({ length: count }, (_, i) => {
+      const seed = Math.floor(Math.random() * 1e6);
+      return {
+        id: 'v-' + Date.now() + '-' + i + '-' + seed,
+        seed,
+        url: `https://image.pollinations.ai/prompt/${encodeURIComponent(
+          effectivePrompt + typographySuffix
+        )}?width=1024&height=1024&nologo=true&model=${ENGINES[engine].model}&seed=${seed}`,
+      };
+    });
+    setVariants((vs) => [...batch, ...vs].slice(0, 12));
+  };
+
+  const markVariant = (id, ok) => setVariants((vs) => vs.map((v) => (v.id === id ? { ...v, loaded: ok } : v)));
+
+  // Re-roll a failed variation with a fresh seed (the free endpoint rate-limits parallel requests).
+  const retryVariant = (v) => {
+    const seed = Math.floor(Math.random() * 1e6);
+    setVariants((vs) =>
+      vs.map((x) =>
+        x.id === v.id ? { ...x, seed, loaded: undefined, url: v.url.replace(/&seed=\d+/, `&seed=${seed}`) } : x
+      )
     );
   };
 
-  const downloadPreview = async () => {
+  const downloadVariant = async (v) => {
     try {
-      const res = await fetch(imgUrl);
+      const res = await fetch(v.url);
       const blob = await res.blob();
-      saveBlob(blob, `${slug(concept?.name || 'brand')}-ai-preview.png`);
+      saveBlob(blob, `${slug(concept?.name || 'brand')}-ai-${v.seed}.png`);
     } catch {
       setFailed(true);
     }
@@ -282,12 +304,18 @@ export function AiAdvisor({ concept }) {
               <option value="flux">Flux · fastest</option>
             </select>
             <button
-              onClick={generate}
-              disabled={loading}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-400 disabled:opacity-50"
+              onClick={() => generate(1)}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-400"
             >
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-              {loading ? 'Rendering…' : 'Generate free preview'}
+              {pending > 0 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+              {pending > 0 ? `Rendering ${pending}…` : 'Generate free preview'}
+            </button>
+            <button
+              onClick={() => generate(4)}
+              className="flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1.5 text-[11px] text-cyan-300 transition hover:bg-cyan-400/20"
+            >
+              <Layers className="h-3.5 w-3.5" />
+              Variations ×4
             </button>
             <button
               onClick={copy}
@@ -307,55 +335,110 @@ export function AiAdvisor({ concept }) {
           </div>
         </div>
 
-        {imgUrl && (
+        {variants.length > 0 && (
           <div className="mt-4 space-y-2">
-            <div className="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-950/70">
-              {loading && (
-                <div className="flex aspect-square items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
-                  <span className="font-mono text-[10px] tracking-wider text-slate-400">
-                    {ENGINES[engine].label} is rendering your concept…
-                  </span>
-                </div>
-              )}
-              <img
-                src={imgUrl}
-                alt="AI-generated logo concept preview"
-                onLoad={() => setLoading(false)}
-                onError={() => {
-                  setLoading(false);
-                  setFailed(true);
+            <div className="flex items-center justify-between">
+              <h4 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                <Images className="h-3.5 w-3.5 text-cyan-400" />
+                AI Variations — compare & pick the winner
+                {pending > 0 && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+              </h4>
+              <button
+                onClick={() => {
+                  setVariants([]);
+                  setWinnerId(null);
                 }}
-                className={`w-full ${loading ? 'hidden' : ''}`}
-              />
+                className="text-[10px] text-slate-500 transition hover:text-rose-400"
+              >
+                Clear all
+              </button>
             </div>
-            {failed ? (
+            <div className="grid grid-cols-2 gap-2">
+              {variants.map((v) => (
+                <div
+                  key={v.id}
+                  className={`overflow-hidden rounded-xl border bg-slate-950/70 ${
+                    winnerId === v.id ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-slate-700'
+                  }`}
+                >
+                  <div className="relative aspect-square">
+                    {v.loaded === undefined && (
+                      <div className="absolute inset-0 flex items-center justify-center gap-1.5">
+                        <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+                        <span className="font-mono text-[9px] tracking-wider text-slate-500">
+                          {ENGINES[engine].label}
+                        </span>
+                      </div>
+                    )}
+                    {v.loaded === false && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                        <AlertTriangle className="h-4 w-4 text-rose-500" />
+                        <span className="font-mono text-[9px] text-rose-400">render failed</span>
+                        <button
+                          onClick={() => retryVariant(v)}
+                          className="flex items-center gap-1 rounded-md border border-slate-700 bg-slate-900/80 px-2 py-1 text-[9px] text-slate-300 transition hover:border-indigo-500 hover:text-indigo-300"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Retry
+                        </button>
+                      </div>
+                    )}
+                    <img
+                      src={v.url}
+                      alt="AI-generated logo variation"
+                      onLoad={() => markVariant(v.id, true)}
+                      onError={() => markVariant(v.id, false)}
+                      className={`h-full w-full object-cover ${v.loaded ? '' : 'invisible'}`}
+                    />
+                    {winnerId === v.id && (
+                      <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-bold text-slate-900">
+                        <Crown className="h-3 w-3" />
+                        Winner
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-1 border-t border-slate-700 bg-slate-900/80 px-2 py-1.5">
+                    <button
+                      onClick={() => setWinnerId(winnerId === v.id ? null : v.id)}
+                      title={winnerId === v.id ? 'Unpick winner' : 'Pick as winner'}
+                      aria-label={winnerId === v.id ? `Unpick variation ${v.seed}` : `Pick variation ${v.seed} as winner`}
+                      className={`rounded-md p-1.5 transition ${
+                        winnerId === v.id ? 'bg-amber-400/20 text-amber-300' : 'text-slate-400 hover:text-amber-300'
+                      }`}
+                    >
+                      <Crown className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="font-mono text-[9px] text-slate-600">#{v.seed}</span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => downloadVariant(v)}
+                        title="Download PNG"
+                        aria-label={`Download variation ${v.seed} as PNG`}
+                        className="rounded-md p-1.5 text-slate-400 transition hover:text-indigo-300"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setVariants((vs) => vs.filter((x) => x.id !== v.id))}
+                        title="Remove"
+                        aria-label={`Remove variation ${v.seed}`}
+                        className="rounded-md p-1.5 text-slate-400 transition hover:text-rose-400"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {failed && (
               <p className="text-[10px] text-rose-400">
-                The free renderer didn't respond — try again, or copy the prompt into Ideogram's free web app.
+                A render failed — try again, or copy the prompt into Ideogram's free web app.
               </p>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={downloadPreview}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  PNG
-                </button>
-                <button
-                  onClick={generate}
-                  disabled={loading}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500 disabled:opacity-50"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Regenerate
-                </button>
-              </div>
             )}
             <p className="text-[10px] leading-relaxed text-slate-500">
-              Free raster preview via {ENGINES[engine].label} (Pollinations) — no key or account needed. For ~90–95%
-              wordmark spelling accuracy, take the prompt to Ideogram's free web app, then vectorize the winner with
-              Recraft.
+              Crown the best variation, download it as PNG, then vectorize with Recraft — or take the prompt to
+              Ideogram's free web app for ~90–95% wordmark spelling accuracy.
             </p>
           </div>
         )}
