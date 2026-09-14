@@ -1,13 +1,47 @@
 @import "tailwindcss";
 
+/* ————————————————————————————————————————————
+   LogoLegacy.pro design tokens
+   Base:  Obsidian #08090C · Carbon #111318 · Elevated #191C24
+   Accent: Prismatic Indigo #4F46E5 → Cyber Cyan #06B6D4 · Amber #F59E0B
+   Text:  Cold white #F8FAFC · Utility #94A3B8 · Disabled #475569
+   ———————————————————————————————————————————— */
+@theme {
+  --color-slate-950: #08090c;
+  --color-slate-900: #111318;
+  --color-slate-800: #191c24;
+  --color-slate-700: #262b36;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --animate-glow: glow 2.8s ease-in-out infinite;
+
+  @keyframes glow {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
 body {
-  background: #0f172a;
-  color: #f1f5f9;
+  background: #08090c;
+  color: #f8fafc;
   font-family: "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Transparency checkerboard for the canvas */
+/* Precision metrology grid for the presentation canvas */
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Transparency checkerboard for export preview */
 .checker {
   background-image:
     linear-gradient(45deg, #dbe3ec 25%, transparent 25%),
@@ -20,7 +54,7 @@ body {
 }
 
 input[type="range"] {
-  accent-color: #6366f1;
+  accent-color: #4f46e5;
 }
 
 input[type="color"] {

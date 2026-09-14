@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from 'react';
-import { SlidersHorizontal, Monitor, Images } from 'lucide-react';
+import { SlidersHorizontal, Monitor, Images, Sparkles, FileDown, ZoomIn, ZoomOut } from 'lucide-react';
+import { LogoLegacyLockup } from './components/LogoLegacyMark';
 import { Wizard } from './components/Wizard';
 import { Gallery } from './components/Gallery';
 import { CanvasStage } from './components/CanvasStage';
@@ -24,7 +25,7 @@ const initialState = {
   concepts: [],
   activeId: null,
   gallery: [],
-  ui: { bg: 'brand', checker: false, innerTab: 'customize', mobileTab: 'design', kitOpen: false },
+  ui: { bg: 'obsidian', checker: false, grid: false, zoom: 1, innerTab: 'customize', mobileTab: 'design', kitOpen: false },
 };
 
 function reducer(state, action) {
@@ -88,20 +89,57 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3.5 sm:px-6">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500 font-bold text-white">
-            <svg viewBox="0 0 24 24" className="h-5 w-5">
-              <text x="12" y="17.5" textAnchor="middle" fontSize="15" fontWeight="800" fontFamily="Inter, sans-serif" fill="currentColor">L</text>
-            </svg>
-          </span>
-          <div>
-            <h1 className="text-base font-semibold tracking-tight text-slate-100">
-              LogoLegacy<span className="font-normal text-slate-500">.pro</span>
-            </h1>
-            <p className="hidden text-[11px] text-slate-400 sm:block">
-              Logo & brand identity studio — free, instant, full-resolution files. No signup, no paywalls.
-            </p>
+      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
+          {/* Left: brand lockup with live glow indicator */}
+          <LogoLegacyLockup />
+
+          {/* Center: engine status + canvas metrology */}
+          <div className="hidden flex-1 items-center justify-center gap-3 lg:flex">
+            <span className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 font-mono text-[10px] tracking-wider text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-glow" aria-hidden="true" />
+              Vector Engine v2.4 · Ready
+            </span>
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700 bg-slate-900/80 px-1.5 py-1">
+              <button
+                onClick={() => dispatch({ type: 'UI', patch: { zoom: Math.max(0.5, Math.round((state.ui.zoom - 0.25) * 100) / 100) } })}
+                aria-label="Zoom out"
+                className="rounded p-1 text-slate-400 transition hover:text-slate-100"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <span className="w-11 text-center font-mono text-[10px] text-slate-300">{Math.round(state.ui.zoom * 100)}%</span>
+              <button
+                onClick={() => dispatch({ type: 'UI', patch: { zoom: Math.min(2, Math.round((state.ui.zoom + 0.25) * 100) / 100) } })}
+                aria-label="Zoom in"
+                className="rounded p-1 text-slate-400 transition hover:text-slate-100"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Right: primary + secondary actions */}
+          <div className="ml-auto flex items-center gap-2 lg:ml-0">
+            <button
+              onClick={() => active && dispatch({ type: 'UI', patch: { kitOpen: true } })}
+              disabled={!active}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500 disabled:opacity-50"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Export
+            </button>
+            <button
+              onClick={() => {
+                dispatch({ type: 'GENERATE' });
+                dispatch({ type: 'UI', patch: { mobileTab: 'studio' } });
+              }}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-400"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Generate New Concept</span>
+              <span className="sm:hidden">Generate</span>
+            </button>
           </div>
         </div>
       </header>
