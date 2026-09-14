@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
-import { Brain, Copy, Check, AlertTriangle, Route } from 'lucide-react';
+import { Brain, Copy, Check, AlertTriangle, Route, Wand2, Loader2, Download, RefreshCw } from 'lucide-react';
 import { FONTS } from '../data/brand';
+import { saveBlob, slug } from '../lib/export';
 
 const MODELS = {
   ideogram: { name: 'Ideogram 3.0 / 4.0', accuracy: '~90–95% wordmark accuracy', accent: '#4F46E5' },
@@ -88,6 +89,9 @@ export function AiAdvisor({ concept }) {
   const [taskId, setTaskId] = useState('wordmark');
   const [modelId, setModelId] = useState('ideogram');
   const [copied, setCopied] = useState(''); // '' | 'copied' | 'manual'
+  const [imgUrl, setImgUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const promptRef = useRef(null);
 
   const task = TASKS.find((t) => t.id === taskId);
@@ -110,6 +114,25 @@ export function AiAdvisor({ concept }) {
       setCopied('manual');
     }
     setTimeout(() => setCopied(''), 2500);
+  };
+
+  // Free, keyless generation via Pollinations (Flux) — no account, no API key.
+  const generate = () => {
+    setFailed(false);
+    setLoading(true);
+    setImgUrl(
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1e6)}`
+    );
+  };
+
+  const downloadPreview = async () => {
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      saveBlob(blob, `${slug(concept?.name || 'brand')}-ai-preview.png`);
+    } catch {
+      setFailed(true);
+    }
   };
 
   return (
@@ -181,15 +204,77 @@ export function AiAdvisor({ concept }) {
           className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950/70 p-3 font-mono text-[11px] leading-relaxed text-slate-200 focus:border-indigo-500 focus:outline-none"
         />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="max-w-[70%] text-[10px] leading-relaxed text-amber-300/90">{TIPS[modelId]}</p>
-          <button
-            onClick={copy}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-indigo-400"
-          >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied === 'copied' ? 'Copied' : copied === 'manual' ? 'Selected — press ⌘/Ctrl+C' : 'Copy prompt'}
-          </button>
+          <p className="max-w-[60%] text-[10px] leading-relaxed text-amber-300/90">{TIPS[modelId]}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={generate}
+              disabled={loading}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-400 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+              {loading ? 'Rendering…' : 'Generate free preview'}
+            </button>
+            <button
+              onClick={copy}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500"
+            >
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied === 'copied' ? 'Copied' : copied === 'manual' ? 'Selected — ⌘/Ctrl+C' : 'Copy prompt'}
+            </button>
+          </div>
         </div>
+
+        {imgUrl && (
+          <div className="mt-4 space-y-2">
+            <div className="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-950/70">
+              {loading && (
+                <div className="flex aspect-square items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+                  <span className="font-mono text-[10px] tracking-wider text-slate-400">
+                    Flux is rendering your concept…
+                  </span>
+                </div>
+              )}
+              <img
+                src={imgUrl}
+                alt="AI-generated logo concept preview"
+                onLoad={() => setLoading(false)}
+                onError={() => {
+                  setLoading(false);
+                  setFailed(true);
+                }}
+                className={`w-full ${loading ? 'hidden' : ''}`}
+              />
+            </div>
+            {failed ? (
+              <p className="text-[10px] text-rose-400">
+                The free renderer didn't respond — try again, or copy the prompt into Ideogram's free web app.
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={downloadPreview}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  PNG
+                </button>
+                <button
+                  onClick={generate}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[11px] text-slate-200 transition hover:border-slate-500 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Regenerate
+                </button>
+              </div>
+            )}
+            <p className="text-[10px] leading-relaxed text-slate-500">
+              Free raster preview via Flux (Pollinations) — no key or account needed. For ~90–95% wordmark spelling
+              accuracy, take the prompt to Ideogram's free web app, then vectorize the winner with Recraft.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Model matrix */}
