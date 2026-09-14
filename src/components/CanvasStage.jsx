@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, LayoutGrid, Palette, FileCode } from 'lucide-react';
+import { Download, LayoutGrid, Palette, FileCode, Bookmark } from 'lucide-react';
 import { LogoMark } from './LogoMark';
 import { downloadSvg, downloadPng } from '../lib/export';
 
@@ -9,7 +9,7 @@ const BG_MODES = [
   { id: 'brand', label: 'Brand', color: null },
 ];
 
-export function CanvasStage({ concept, ui, dispatch }) {
+export function CanvasStage({ concept, ui, dispatch, saved }) {
   const [pngSize, setPngSize] = useState(1024);
   const [transparent, setTransparent] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -83,6 +83,18 @@ export function CanvasStage({ concept, ui, dispatch }) {
         >
           <FileCode className="h-3.5 w-3.5" />
           SVG
+        </button>
+        <button
+          onClick={() => dispatch({ type: 'SAVE_TO_GALLERY', concept })}
+          title={saved ? 'Remove from gallery' : 'Save to gallery'}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] transition ${
+            saved
+              ? 'border-amber-400 bg-amber-400/15 text-amber-300'
+              : 'border-slate-700 bg-slate-900/80 text-slate-200 hover:border-slate-500'
+          }`}
+        >
+          <Bookmark className="h-3.5 w-3.5" fill={saved ? 'currentColor' : 'none'} />
+          {saved ? 'Saved' : 'Save'}
         </button>
         <button
           onClick={() => dispatch({ type: 'UI', patch: { kitOpen: true } })}

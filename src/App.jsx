@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react';
-import { SlidersHorizontal, Monitor } from 'lucide-react';
+import { SlidersHorizontal, Monitor, Images } from 'lucide-react';
 import { Wizard } from './components/Wizard';
+import { Gallery } from './components/Gallery';
 import { CanvasStage } from './components/CanvasStage';
 import { ConceptGrid } from './components/ConceptGrid';
 import { CustomizePanel } from './components/CustomizePanel';
@@ -22,6 +23,7 @@ const initialState = {
   },
   concepts: [],
   activeId: null,
+  gallery: [],
   ui: { bg: 'brand', checker: false, innerTab: 'customize', mobileTab: 'design', kitOpen: false },
 };
 
@@ -57,6 +59,16 @@ function reducer(state, action) {
         }),
       };
     }
+    case 'SAVE_TO_GALLERY': {
+      const c = action.concept;
+      const exists = state.gallery.some((g) => g.id === c.id);
+      return {
+        ...state,
+        gallery: exists ? state.gallery.filter((g) => g.id !== c.id) : [...state.gallery, c],
+      };
+    }
+    case 'REMOVE_FROM_GALLERY':
+      return { ...state, gallery: state.gallery.filter((g) => g.id !== action.id) };
     case 'UI':
       return { ...state, ui: { ...state.ui, ...action.patch } };
     default:
@@ -72,6 +84,7 @@ export default function App() {
 
   const active = state.concepts.find((c) => c.id === state.activeId) || null;
   const mt = state.ui.mobileTab;
+  const galleryMode = mt === 'gallery';
 
   return (
     <div className="min-h-screen">
@@ -94,11 +107,12 @@ export default function App() {
       </header>
 
       <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6">
-        {/* Mobile top-level tabs */}
-        <div className="mb-4 flex gap-2 lg:hidden">
+        {/* Top-level tabs */}
+        <div className="mb-4 flex gap-2">
           {[
             { id: 'design', label: 'Design', Icon: SlidersHorizontal },
             { id: 'studio', label: 'Studio', Icon: Monitor },
+            { id: 'gallery', label: 'Gallery', Icon: Images },
           ].map(({ id, label, Icon }) => (
             <button
               key={id}
@@ -115,16 +129,37 @@ export default function App() {
           ))}
         </div>
 
+        {galleryMode ? (
+          <Gallery concepts={state.gallery} dispatch={dispatch} />
+        ) : (
         <div className="flex flex-col items-start gap-5 lg:flex-row">
           {/* Wizard sidebar */}
-          <aside className={`${mt === 'design' ? '' : 'hidden'} w-full shrink-0 lg:block lg:w-[380px]`}>
+          <aside
+            className={`w-full shrink-0 ${mt === 'design' ? '' : 'hidden'} ${mt === 'gallery' ? '' : 'lg:block lg:w-[380px]'}`}
+          >
             <Wizard wizard={state.wizard} dispatch={dispatch} />
           </aside>
 
           {/* Studio column */}
-          <main className={`${mt === 'studio' ? '' : 'hidden'} w-full min-w-0 flex-1 space-y-5 lg:block`}>
-            {active && <CanvasStage concept={active} ui={state.ui} dispatch={dispatch} />}
-            <ConceptGrid concepts={state.concepts} activeId={state.activeId} dispatch={dispatch} />
+          <main
+            className={`w-full min-w-0 flex-1 space-y-5 ${mt === 'studio' || mt === 'design' ? '' : 'hidden'} ${
+              mt === 'gallery' ? '' : 'lg:block'
+            }`}
+          >
+            {active && (
+              <CanvasStage
+                concept={active}
+                ui={state.ui}
+                dispatch={dispatch}
+                saved={state.gallery.some((g) => g.id === active.id)}
+              />
+            )}
+            <ConceptGrid
+              concepts={state.concepts}
+              activeId={state.activeId}
+              dispatch={dispatch}
+              savedIds={state.gallery.map((g) => g.id)}
+            />
             {active && (
               <section className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
                 <div className="mb-4 flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
@@ -155,6 +190,7 @@ export default function App() {
             )}
           </main>
         </div>
+        )}
       </div>
 
       {state.ui.kitOpen && active && (

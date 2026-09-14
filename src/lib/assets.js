@@ -178,3 +178,26 @@ export async function downloadAllZip(concept) {
   const blob = await zip.generateAsync({ type: 'blob' });
   saveBlob(blob, `${slug(concept.name)}-brand-kit.zip`);
 }
+
+// Bulk export: every saved gallery logo as SVG + transparent PNG in one ZIP.
+export async function downloadGalleryZip(concepts) {
+  const zip = new JSZip();
+  for (let i = 0; i < concepts.length; i++) {
+    const c = concepts[i];
+    const folder = zip.folder(`${String(i + 1).padStart(2, '0')}-${c.layout}`);
+    let css = '';
+    try {
+      css = await embedFonts(c);
+    } catch {
+      /* best-effort embedding */
+    }
+    folder.file('logo.svg', buildSvgString(c, css));
+    folder.file('logo-1024.png', await zipFile(renderLogoCanvas(c, 1024, true)));
+  }
+  zip.file(
+    'README.md',
+    `# Logo Gallery\n\n${concepts.length} logo(s), generated free with LogoLegacy (logolegacy.pro).\nEach folder holds a font-embedded vector SVG and a transparent 1024px PNG.`
+  );
+  const blob = await zip.generateAsync({ type: 'blob' });
+  saveBlob(blob, `${slug(concepts[0]?.name || 'brand')}-logos.zip`);
+}
