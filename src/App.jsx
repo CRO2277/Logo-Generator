@@ -1,167 +1,139 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Controls } from './components/Controls';
-import { Gallery } from './components/Gallery';
-import { LogoMark } from './components/LogoMark';
-import { makeVariants, randomCfg } from './lib/variants';
-import { downloadPng, downloadSvg } from './lib/export';
-import { listSaved, saveToGallery, removeFromGallery } from './lib/gallery';
+import { useEffect, useReducer } from 'react';
+import { Aperture, SlidersHorizontal, Monitor } from 'lucide-react';
+import { Wizard } from './components/Wizard';
+import { CanvasStage } from './components/CanvasStage';
+import { ConceptGrid } from './components/ConceptGrid';
+import { CustomizePanel } from './components/CustomizePanel';
+import { Mockups } from './components/Mockups';
+import { BrandKitModal } from './components/BrandKitModal';
+import { generateConcepts } from './lib/generate';
 
-const DEFAULT_CFG = {
-  name: 'Aurora Labs',
-  tagline: 'design tools',
-  icon: 'sparkle',
-  palette: 'indigo',
-  font: 'grotesk',
-  layout: 'icon-left',
-  uppercase: true,
+const initialState = {
+  wizard: {
+    name: 'Nova Studio',
+    tagline: 'digital craft',
+    niche: 'creative',
+    personality: 'minimal',
+    paletteId: 'monochrome',
+    layout: 'stacked',
+    custom: { icon: '#6366F1', title: '#0F172A', tag: '#64748B', bg: '#F8FAFC' },
+  },
+  concepts: [],
+  activeId: null,
+  ui: { bg: 'brand', checker: false, innerTab: 'customize', mobileTab: 'design', kitOpen: false },
 };
-const STORAGE_KEY = 'logoforge:cfg';
 
-function loadCfg() {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return { ...DEFAULT_CFG, ...JSON.parse(s) };
-  } catch {
-    /* ignore */
+function reducer(state, action) {
+  switch (action.type) {
+    case 'WIZARD':
+      return { ...state, wizard: { ...state.wizard, ...action.patch } };
+    case 'GENERATE': {
+      const concepts = generateConcepts(state.wizard);
+      return { ...state, concepts, activeId: concepts[0].id };
+    }
+    case 'UPDATE_CONCEPT':
+      return {
+        ...state,
+        concepts: state.concepts.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)),
+      };
+    case 'SET_ACTIVE':
+      return { ...state, activeId: action.id };
+    case 'UI':
+      return { ...state, ui: { ...state.ui, ...action.patch } };
+    default:
+      return state;
   }
-  return DEFAULT_CFG;
 }
 
-const BOLT = 'M13 2 L4.5 13.5 L10.6 13.5 L10 22 L19.5 10.5 L13.4 10.5 Z';
-
 export default function App() {
-  const [cfg, setCfg] = useState(loadCfg);
-  const [theme, setTheme] = useState('light');
-  const [gallery, setGallery] = useState(listSaved);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const [view, setView] = useState(() =>
-    window.location.hash === '#/gallery' ? 'gallery' : 'studio'
-  );
-
+  const [state, dispatch] = useReducer(reducer, initialState);
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
-    } catch {
-      /* ignore */
-    }
-  }, [cfg]);
-
-  useEffect(() => {
-    const onHash = () =>
-      setView(window.location.hash === '#/gallery' ? 'gallery' : 'studio');
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    dispatch({ type: 'GENERATE' });
   }, []);
 
-  const go = (v) => {
-    window.location.hash = v === 'gallery' ? '#/gallery' : '#/';
-    setView(v);
-  };
-
-  const set = (patch) => setCfg((c) => ({ ...c, ...patch }));
-  const variants = useMemo(() => makeVariants(cfg), [cfg]);
-
-  const handleSave = () => {
-    const entry = saveToGallery(cfg);
-    setGallery((g) => [entry, ...g]);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1600);
-  };
-
-  const handleEdit = (item) => {
-    setCfg({ ...DEFAULT_CFG, ...item.cfg });
-    go('studio');
-    window.scrollTo(0, 0);
-  };
-
-  const handleDelete = (id) => {
-    removeFromGallery(id);
-    setGallery((g) => g.filter((i) => i.id !== id));
-  };
+  const active = state.concepts.find((c) => c.id === state.activeId) || null;
+  const mt = state.ui.mobileTab;
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-row">
-          <div className="brand">
-            <svg className="brand-icon" viewBox="0 0 24 24">
-              <path d={BOLT} fill="#818CF8" />
-            </svg>
-            <h1>
-              LogoLegacy<span className="tld">.pro</span>
-            </h1>
+    <div className="min-h-screen">
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3.5 sm:px-6">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15">
+            <Aperture className="h-5 w-5 text-indigo-400" />
+          </span>
+          <div>
+            <h1 className="text-base font-semibold tracking-tight text-slate-100">VektorBrand</h1>
+            <p className="hidden text-[11px] text-slate-400 sm:block">
+              Intelligent logo maker & brand identity generator
+            </p>
           </div>
-          <nav className="nav-tabs" aria-label="Sections">
-            <button className={view === 'studio' ? 'on' : ''} onClick={() => go('studio')}>
-              Studio
-            </button>
-            <button className={view === 'gallery' ? 'on' : ''} onClick={() => go('gallery')}>
-              Gallery
-              {gallery.length > 0 && <span className="badge">{gallery.length}</span>}
-            </button>
-          </nav>
         </div>
-        <p className="tagline-sub">
-          Craft a logo for your brand — pick a style, tune every detail, download SVG or PNG.
-        </p>
       </header>
 
-      {view === 'studio' ? (
-        <main className="layout">
-          <Controls cfg={cfg} set={set} />
+      <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6">
+        {/* Mobile top-level tabs */}
+        <div className="mb-4 flex gap-2 lg:hidden">
+          {[
+            { id: 'design', label: 'Design', Icon: SlidersHorizontal },
+            { id: 'studio', label: 'Studio', Icon: Monitor },
+          ].map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => dispatch({ type: 'UI', patch: { mobileTab: id } })}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                mt === id
+                  ? 'border-indigo-500 bg-indigo-500/15 text-indigo-300'
+                  : 'border-slate-700 bg-slate-800/60 text-slate-400'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
 
-          <section className="stage">
-            <div className="preview-card">
-              <div className="preview-toolbar">
-                <div className="seg" role="group" aria-label="Preview background">
-                  <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>
-                    Light
-                  </button>
-                  <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>
-                    Dark
-                  </button>
-                </div>
-                <div className="actions">
-                  <button className="btn ghost" onClick={handleSave}>
-                    {savedFlash ? 'Saved ✓' : 'Save'}
-                  </button>
-                  <button className="btn ghost" onClick={() => setCfg(randomCfg(cfg))}>
-                    ⟳ Shuffle
-                  </button>
-                  <button className="btn" onClick={() => downloadSvg(cfg, theme)}>
-                    Download SVG
-                  </button>
-                  <button className="btn primary" onClick={() => downloadPng(cfg, theme)}>
-                    Download PNG
-                  </button>
-                </div>
-              </div>
-              <div className={`surface ${theme}`}>
-                <LogoMark cfg={cfg} theme={theme} />
-              </div>
-            </div>
+        <div className="flex flex-col items-start gap-5 lg:flex-row">
+          {/* Wizard sidebar */}
+          <aside className={`${mt === 'design' ? '' : 'hidden'} w-full shrink-0 lg:block lg:w-[380px]`}>
+            <Wizard wizard={state.wizard} dispatch={dispatch} />
+          </aside>
 
-            <div className="variants">
-              <h3>Variations — tap to apply</h3>
-              <div className="variant-row">
-                {variants.map((v, i) => (
-                  <button key={i} className="variant" onClick={() => setCfg(v)} aria-label="Apply variation">
-                    <LogoMark cfg={v} theme="light" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-        </main>
-      ) : (
-        <main className="gallery-wrap">
-          <Gallery items={gallery} onEdit={handleEdit} onDelete={handleDelete} />
-        </main>
+          {/* Studio column */}
+          <main className={`${mt === 'studio' ? '' : 'hidden'} w-full min-w-0 flex-1 space-y-5 lg:block`}>
+            {active && <CanvasStage concept={active} ui={state.ui} dispatch={dispatch} />}
+            <ConceptGrid concepts={state.concepts} activeId={state.activeId} dispatch={dispatch} />
+            {active && (
+              <section className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
+                <div className="mb-4 flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
+                  {[
+                    { id: 'customize', label: 'Customize' },
+                    { id: 'mockups', label: 'Mockups' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => dispatch({ type: 'UI', patch: { innerTab: t.id } })}
+                      className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition ${
+                        state.ui.innerTab === t.id ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                {state.ui.innerTab === 'customize' ? (
+                  <CustomizePanel concept={active} dispatch={dispatch} />
+                ) : (
+                  <Mockups concept={active} />
+                )}
+              </section>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {state.ui.kitOpen && active && (
+        <BrandKitModal concept={active} onClose={() => dispatch({ type: 'UI', patch: { kitOpen: false } })} />
       )}
-
-      <footer className="footer">
-        Everything renders locally in your browser — no account, no uploads.
-      </footer>
     </div>
   );
 }

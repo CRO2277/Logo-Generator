@@ -1,14 +1,15 @@
-// Export pipeline: builds SVG documents and PNG canvases from the same
-// geometry the preview uses. SVG embeds subsetted Google Fonts as base64
-// (best effort) so the file renders identically offline.
+// Export pipeline: production-ready SVG (subsetted Google Fonts embedded as
+// base64 @font-face, clean grouped paths, no inline styles) and high-res
+// square PNGs at 1024/2048/4096 with optional transparency.
 
-import { layoutLogo, resolveCfg } from './layout';
-import { FONTS } from '../data/brand';
+import { layoutLogo } from './layout';
+import { FONTS, LAYOUTS } from '../data/brand';
+import { fmtColor } from './color';
 
-const PAD = 56;
+const PAD = 48;
 
 function slug(s) {
-  return ((s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'logo';
+  return ((s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'brand';
 }
 
 function saveBlob(blob, filename) {
@@ -90,18 +91,18 @@ async function fetchFontFace(cssName, weight, text) {
   return `@font-face{font-family:'${cssName}';font-weight:${weight};font-style:normal;src:url(data:font/woff2;base64,${btoa(bin)}) format('woff2');}`;
 }
 
-async function embedFonts(cfg) {
-  const { font, name, nameRaw, tag } = resolveCfg(cfg);
-  const initials = nameRaw
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
+async function embedFonts(concept) {
+  const titleFont = FONTS.find((f) => f.id === concept.titleFont) || FONTS[0];
+  const tagFont = FONTS.find((f) => f.id === concept.tagFont) || FONTS[0];
+  const upper = concept.uppercase !== false;
+  const nameRaw = (concept.name || '').trim() || 'Brand';
+  const name = upper ? nameRaw.toUpperCase() : nameRaw;
+  const tag = ((concept.tagline || '').trim()).toUpperCase();
+  const initials = nameRaw.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const jobs = [
-    fetchFontFace(font.cssName, font.weight, name),
-    tag ? fetchFontFace('Inter', 600, tag) : Promise.resolve(''),
-    cfg.layout === 'monogram' ? fetchFontFace('Inter', 700, initials) : Promise.resolve(''),
+    fetchFontFace(titleFont.cssName, concept.titleWeight || 700, name),
+    tag ? fetchFontFace(tagFont.cssName, concept.tagWeight || 600, tag) : Promise.resolve(''),
+    concept.layout === 'monogram' ? fetchFontFace('Inter', 700, initials) : Promise.resolve(''),
   ];
   const css = await Promise.all(jobs);
   return css.filter(Boolean).join('');
@@ -109,14 +110,14 @@ async function embedFonts(cfg) {
 
 // --- Public API ---
 
-export async function downloadSvg(cfg, theme = 'light') {
+export async function downloadSvg(concept) {
   let fontCss = '';
   try {
-    fontCss = await embedFonts(cfg);
+    fontCss = await embedFonts(concept);
   } catch {
-    // Fonts won't embed (offline?) — export anyway, system fallbacks apply.
+    // Font embedding is best-effort; the file still exports with font-family refs.
   }
-  const { w, h, prims } = layoutLogo(cfg, theme);
+  const { w, h, prims } = layoutLogo(concept);
   const W = w + PAD * 2;
   const H = h + PAD * 2;
   const style = fontCss ? `<style>${fontCss}</style>` : '';
@@ -126,18 +127,53 @@ export async function downloadSvg(cfg, theme = 'light') {
     style +
     `<g transform="translate(${PAD} ${PAD})">${prims.map(primToSvg).join('')}</g>` +
     `</svg>`;
-  saveBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${slug(cfg.name)}-logo.svg`);
+  saveBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${slug(concept.name)}-logo.svg`);
 }
 
-export async function downloadPng(cfg, theme = 'light', scale = 2) {
-  const { w, h, prims } = layoutLogo(cfg, theme);
+export async function downloadPng(concept, size = 1024, transparent = true) {
+  const { w, h, prims } = layoutLogo(concept);
   const cv = document.createElement('canvas');
-  cv.width = Math.round((w + PAD * 2) * scale);
-  cv.height = Math.round((h + PAD * 2) * scale);
+  cv.width = size;
+  cv.height = size;
   const ctx = cv.getContext('2d');
-  ctx.scale(scale, scale);
-  ctx.translate(PAD, PAD);
+  if (!transparent) {
+    ctx.fillStyle = concept.colors?.bg || '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+  }
+  const margin = size * 0.1;
+  const s = Math.min((size - margin * 2) / w, (size - margin * 2) / h);
+  ctx.translate((size - w * s) / 2, (size - h * s) / 2);
+  ctx.scale(s, s);
   for (const p of prims) drawPrim(ctx, p);
   const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
-  saveBlob(blob, `${slug(cfg.name)}-logo.png`);
+  saveBlob(blob, `${slug(concept.name)}-${size}.png`);
+}
+
+export function downloadBrandKit(concept) {
+  const titleFont = FONTS.find((f) => f.id === concept.titleFont) || FONTS[0];
+  const tagFont = FONTS.find((f) => f.id === concept.tagFont) || FONTS[0];
+  const layout = LAYOUTS.find((l) => l.id === concept.layout) || LAYOUTS[0];
+  const colorLines = ['icon', 'title', 'tag', 'bg'].map((k) => {
+    const f = fmtColor(concept.colors?.[k] || '#000000');
+    return `- **${k}**: ${f.hex} · rgb(${f.rgb}) · hsl(${f.hsl})`;
+  });
+  const md = [
+    `# ${concept.name || 'Brand'} — Brand Kit`,
+    '',
+    '## Colors (HEX · RGB · HSL)',
+    ...colorLines,
+    '',
+    '## Typography',
+    `- Title: ${titleFont.label} — weight ${concept.titleWeight} — tracking ${concept.trackEm ?? 0.02}em${concept.uppercase !== false ? ' — uppercase' : ''}`,
+    `- Tagline: ${tagFont.label} — weight ${concept.tagWeight || 600} — uppercase — tracking 0.22em`,
+    '',
+    '## Layout lockup',
+    `- Archetype: ${layout.label}`,
+    `- Alignment: ${concept.align}`,
+    `- Icon scale: ${Math.round((concept.iconScale ?? 1) * 100)}% · icon-to-text gap: ${Math.round((concept.gap ?? 1) * 100)}%`,
+    '',
+    '---',
+    'Generated with VektorBrand.',
+  ].join('\n');
+  saveBlob(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${slug(concept.name)}-brand-kit.md`);
 }

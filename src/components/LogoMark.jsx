@@ -28,8 +28,9 @@ function Prim({ p }) {
   );
 }
 
-// Renders the logo as an SVG using the shared geometry (same as exports).
-export function LogoMark({ cfg, theme = 'light' }) {
+// Renders a concept as SVG using the shared geometry (identical to exports).
+// Scales down to its container via max-width; auto-fits any viewport.
+export function LogoMark({ concept }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -40,7 +41,7 @@ export function LogoMark({ cfg, theme = 'light' }) {
       alive = false;
     };
   }, []);
-  const { w, h, prims } = useMemo(() => layoutLogo(cfg, theme), [cfg, theme, tick]);
+  const { w, h, prims } = useMemo(() => layoutLogo(concept), [concept, tick]);
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
@@ -48,7 +49,7 @@ export function LogoMark({ cfg, theme = 'light' }) {
       height={h}
       style={{ maxWidth: '100%', height: 'auto' }}
       role="img"
-      aria-label={`${cfg.name || 'Brand'} logo`}
+      aria-label={`${concept.name || 'Brand'} logo`}
     >
       {prims.map((p, i) => (
         <Prim key={i} p={p} />

@@ -1,4 +1,5 @@
-// Brand data: icons, palettes, typefaces, style presets and layouts.
+// Brand knowledge base: icon glyphs, typefaces, palettes, niches,
+// personalities and layout archetypes.
 
 export const ICONS = [
   { id: 'bolt', label: 'Bolt', d: 'M13 2 L4.5 13.5 L10.6 13.5 L10 22 L19.5 10.5 L13.4 10.5 Z' },
@@ -13,42 +14,58 @@ export const ICONS = [
   { id: 'wave', label: 'Wave', d: 'M2 12 C4.7 8.5 7.3 8.5 10 12 C12.7 15.5 15.3 15.5 18 12 C19.3 10.3 20.7 9.4 22 9.1 L22 13.5 C20.7 13.8 19.3 14.7 18 16.4 C15.3 19.9 12.7 19.9 10 16.4 C7.3 12.9 4.7 12.9 2 16.4 Z' },
   { id: 'chat', label: 'Chat', d: 'M20 3 H4 A2 2 0 0 0 2 5 V15 A2 2 0 0 0 4 17 H8 V22 L13 17 H20 A2 2 0 0 0 22 15 V5 A2 2 0 0 0 20 3 Z' },
   { id: 'eye', label: 'Eye', fr: 'evenodd', d: 'M12 5 C6.5 5 2 12 2 12 C2 12 6.5 19 12 19 C17.5 19 22 12 22 12 C22 12 17.5 5 12 5 Z M12 8.5 a3.5 3.5 0 1 0 0 7 a3.5 3.5 0 1 0 0 -7 Z' },
-];
-
-export const PALETTES = [
-  { id: 'ocean', label: 'Ocean', primary: '#0EA5E9', secondary: '#0369A1', text: '#0F172A', muted: '#64748B', darkAccent: '#38BDF8' },
-  { id: 'indigo', label: 'Indigo', primary: '#6366F1', secondary: '#4338CA', text: '#1E1B4B', muted: '#64748B', darkAccent: '#818CF8' },
-  { id: 'violet', label: 'Violet', primary: '#8B5CF6', secondary: '#7C3AED', text: '#2E1065', muted: '#6B7280', darkAccent: '#A78BFA' },
-  { id: 'forest', label: 'Forest', primary: '#16A34A', secondary: '#15803D', text: '#052E16', muted: '#6B7280', darkAccent: '#4ADE80' },
-  { id: 'sunset', label: 'Sunset', primary: '#F97316', secondary: '#EA580C', text: '#431407', muted: '#78716C', darkAccent: '#FB923C' },
-  { id: 'rose', label: 'Rose', primary: '#F43F5E', secondary: '#E11D48', text: '#4C0519', muted: '#6B7280', darkAccent: '#FB7185' },
-  { id: 'amber', label: 'Amber', primary: '#F59E0B', secondary: '#D97706', text: '#451A03', muted: '#78716C', darkAccent: '#FBBF24' },
-  { id: 'slate', label: 'Slate', primary: '#475569', secondary: '#0F172A', text: '#0F172A', muted: '#64748B', darkAccent: '#CBD5E1' },
+  { id: 'shield', label: 'Shield', d: 'M12 2 L20 5 V11 C20 16.5 16.5 20.5 12 22 C7.5 20.5 4 16.5 4 11 V5 Z' },
+  { id: 'briefcase', label: 'Briefcase', d: 'M3 8h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8zM9 3h6v5H9z' },
+  { id: 'pulse', label: 'Pulse', d: 'M2 10.5h5l2-5.5 4 13 2-7.5h7v3h-7l-2 5.5-4-13-2 7.5H2z' },
+  { id: 'cup', label: 'Cup', d: 'M5 4h14v7a7 7 0 0 1-14 0V4zM19 6.5h1a3.2 3.2 0 0 1 0 6.4h-1zM3 19h18v2.2H3z' },
+  { id: 'house', label: 'House', d: 'M12 3l9 8h-3v9H6v-9H3l9-8z' },
+  { id: 'tag', label: 'Tag', fr: 'evenodd', d: 'M3 3h8l10 10-8 8L3 11V3zM7.5 7.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0z' },
+  { id: 'grid', label: 'App Grid', d: 'M3 3h7.5v7.5H3zM13.5 3H21v7.5h-7.5zM3 13.5h7.5V21H3zM13.5 13.5H21V21h-7.5z' },
+  { id: 'pen', label: 'Pen', d: 'M20.7 3.3a2.4 2.4 0 0 0-3.4 0L6 14.6 4 20l5.4-2L20.7 6.7a2.4 2.4 0 0 0 0-3.4z' },
 ];
 
 export const FONTS = [
-  { id: 'inter', label: 'Inter', cssName: 'Inter', family: "'Inter', system-ui, sans-serif", weight: 900, lsEm: -0.015 },
-  { id: 'poppins', label: 'Poppins', cssName: 'Poppins', family: "'Poppins', system-ui, sans-serif", weight: 700, lsEm: -0.01 },
-  { id: 'grotesk', label: 'Space Grotesk', cssName: 'Space Grotesk', family: "'Space Grotesk', system-ui, sans-serif", weight: 700, lsEm: -0.005 },
-  { id: 'playfair', label: 'Playfair', cssName: 'Playfair Display', family: "'Playfair Display', Georgia, serif", weight: 700, lsEm: 0.005 },
-  { id: 'dmserif', label: 'DM Serif', cssName: 'DM Serif Display', family: "'DM Serif Display', Georgia, serif", weight: 400, lsEm: 0 },
-  { id: 'bebas', label: 'Bebas Neue', cssName: 'Bebas Neue', family: "'Bebas Neue', Impact, sans-serif", weight: 400, lsEm: 0.03 },
-  { id: 'pacifico', label: 'Pacifico', cssName: 'Pacifico', family: "'Pacifico', cursive", weight: 400, lsEm: 0 },
-  { id: 'quicksand', label: 'Quicksand', cssName: 'Quicksand', family: "'Quicksand', system-ui, sans-serif", weight: 700, lsEm: 0.01 },
+  { id: 'inter', label: 'Inter', cssName: 'Inter', family: "'Inter', system-ui, sans-serif", weights: [400, 500, 600, 700, 800, 900] },
+  { id: 'playfair', label: 'Playfair Display', cssName: 'Playfair Display', family: "'Playfair Display', Georgia, serif", weights: [400, 500, 600, 700, 800, 900] },
+  { id: 'outfit', label: 'Outfit', cssName: 'Outfit', family: "'Outfit', system-ui, sans-serif", weights: [400, 500, 600, 700, 800] },
+  { id: 'spaceGrotesk', label: 'Space Grotesk', cssName: 'Space Grotesk', family: "'Space Grotesk', system-ui, sans-serif", weights: [400, 500, 600, 700] },
+  { id: 'plusJakarta', label: 'Plus Jakarta Sans', cssName: 'Plus Jakarta Sans', family: "'Plus Jakarta Sans', system-ui, sans-serif", weights: [400, 500, 600, 700, 800] },
+  { id: 'syne', label: 'Syne', cssName: 'Syne', family: "'Syne', system-ui, sans-serif", weights: [400, 500, 600, 700, 800] },
+  { id: 'cormorant', label: 'Cormorant Garamond', cssName: 'Cormorant Garamond', family: "'Cormorant Garamond', Georgia, serif", weights: [400, 500, 600, 700] },
+  { id: 'jetbrainsMono', label: 'JetBrains Mono', cssName: 'JetBrains Mono', family: "'JetBrains Mono', ui-monospace, monospace", weights: [400, 500, 600, 700, 800] },
+];
+
+export const PALETTES = [
+  { id: 'monochrome', label: 'Monochrome', icon: '#0F172A', title: '#0F172A', tag: '#64748B', bg: '#F8FAFC' },
+  { id: 'midnight', label: 'Midnight Executive', icon: '#818CF8', title: '#E2E8F0', tag: '#94A3B8', bg: '#0F172A' },
+  { id: 'terracotta', label: 'Warm Terracotta', icon: '#C05621', title: '#7C2D12', tag: '#B45309', bg: '#FFF7ED' },
+  { id: 'electric', label: 'Electric Tech', icon: '#06B6D4', title: '#0F172A', tag: '#0891B2', bg: '#ECFEFF' },
+  { id: 'earth', label: 'Earth Botanicals', icon: '#4D7C0F', title: '#1C1917', tag: '#57534E', bg: '#FAFAF9' },
+  { id: 'coral', label: 'Vibrant Coral', icon: '#F43F5E', title: '#1F2937', tag: '#9F1239', bg: '#FFF1F2' },
+];
+
+export const NICHES = [
+  { id: 'tech', label: 'Technology / SaaS', icons: ['bolt', 'hexagon', 'grid', 'sparkle', 'chat'], fonts: { title: 'spaceGrotesk', tag: 'jetbrainsMono' } },
+  { id: 'commerce', label: 'Commerce & Retail', icons: ['tag', 'chat', 'diamond', 'grid', 'sparkle'], fonts: { title: 'outfit', tag: 'inter' } },
+  { id: 'professional', label: 'Professional & Legal', icons: ['shield', 'briefcase', 'crown', 'eye'], fonts: { title: 'plusJakarta', tag: 'inter' } },
+  { id: 'health', label: 'Health & Wellness', icons: ['pulse', 'heart', 'drop', 'leaf'], fonts: { title: 'plusJakarta', tag: 'inter' } },
+  { id: 'hospitality', label: 'Hospitality & Food', icons: ['cup', 'leaf', 'heart', 'drop'], fonts: { title: 'playfair', tag: 'inter' } },
+  { id: 'creative', label: 'Creative & Media', icons: ['pen', 'sparkle', 'eye', 'wave', 'mountain'], fonts: { title: 'syne', tag: 'inter' } },
+  { id: 'industrial', label: 'Industrial & Trades', icons: ['mountain', 'house', 'hexagon', 'bolt', 'shield'], fonts: { title: 'spaceGrotesk', tag: 'inter' } },
+];
+
+export const PERSONALITIES = [
+  { id: 'minimal', label: 'Minimalist & Geometric', fonts: ['inter', 'outfit'], weight: 600, track: 0.1 },
+  { id: 'elegant', label: 'Elegant & Luxury', fonts: ['cormorant', 'playfair'], weight: 600, track: 0.03 },
+  { id: 'bold', label: 'Bold & Technical', fonts: ['spaceGrotesk', 'outfit'], weight: 800, track: 0 },
+  { id: 'organic', label: 'Organic & Friendly', fonts: ['plusJakarta', 'outfit'], weight: 700, track: 0.02 },
+  { id: 'classic', label: 'Classic & Authoritative', fonts: ['playfair', 'cormorant'], weight: 700, track: 0.05 },
 ];
 
 export const LAYOUTS = [
-  { id: 'icon-left', label: 'Icon left' },
-  { id: 'icon-top', label: 'Icon top' },
-  { id: 'monogram', label: 'Badge' },
-  { id: 'wordmark', label: 'Text only' },
-];
-
-export const PRESETS = [
-  { id: 'minimal', label: 'Minimal', cfg: { font: 'inter', layout: 'wordmark', palette: 'slate', icon: 'diamond', uppercase: true } },
-  { id: 'bold', label: 'Bold', cfg: { font: 'bebas', layout: 'icon-left', palette: 'sunset', icon: 'bolt', uppercase: true } },
-  { id: 'playful', label: 'Playful', cfg: { font: 'pacifico', layout: 'icon-top', palette: 'amber', icon: 'sparkle', uppercase: false } },
-  { id: 'elegant', label: 'Elegant', cfg: { font: 'dmserif', layout: 'icon-left', palette: 'rose', icon: 'diamond', uppercase: false } },
-  { id: 'tech', label: 'Tech', cfg: { font: 'grotesk', layout: 'monogram', palette: 'ocean', icon: 'hexagon', uppercase: true } },
-  { id: 'organic', label: 'Organic', cfg: { font: 'quicksand', layout: 'icon-left', palette: 'forest', icon: 'leaf', uppercase: false } },
+  { id: 'horizontal', label: 'Horizontal Lockup' },
+  { id: 'stacked', label: 'Stacked Center' },
+  { id: 'monogram', label: 'Monogram Badge' },
+  { id: 'wordmark', label: 'Minimalist Wordmark' },
+  { id: 'emblem', label: 'Circular Emblem' },
 ];
