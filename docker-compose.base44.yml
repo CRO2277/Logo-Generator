@@ -10,6 +10,9 @@ services:
     environment:
       - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
       - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - path: /run/base44/app.env
+        required: false
     ports:
       - "3000:3000"
     command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 3000 --strictPort"

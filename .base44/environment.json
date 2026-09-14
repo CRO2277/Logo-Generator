@@ -2,5 +2,11 @@
   "previewPort": 3000,
   "healthPath": "/",
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
-  "secrets": []
+  "secrets": [
+    {
+      "name": "VITE_GOOGLE_CLIENT_ID",
+      "description": "Google Drive OAuth 2.0 Web Client ID (Google Cloud Console → APIs & Services → Credentials; enable the Drive API and add the preview origin to Authorized JavaScript origins)",
+      "requiredAtBoot": false
+    }
+  ]
 }

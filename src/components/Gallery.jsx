@@ -3,9 +3,12 @@ import { Package, Loader2, Trash2, FileCode, Bookmark } from 'lucide-react';
 import { LogoMark } from './LogoMark';
 import { downloadSvg } from '../lib/export';
 import { downloadGalleryZip } from '../lib/assets';
+import { DriveToggle } from './DriveToggle';
+import { driveEnabled, backupZipToDrive } from '../lib/drive';
 
 export function Gallery({ concepts, dispatch }) {
   const [busy, setBusy] = useState(false);
+  const [driveStatus, setDriveStatus] = useState(null);
 
   if (!concepts.length) {
     return (
@@ -21,8 +24,18 @@ export function Gallery({ concepts, dispatch }) {
 
   const run = async () => {
     setBusy(true);
+    setDriveStatus(null);
     try {
-      await downloadGalleryZip(concepts);
+      const { blob, filename } = await downloadGalleryZip(concepts);
+      if (driveEnabled()) {
+        setDriveStatus('saving');
+        try {
+          await backupZipToDrive(blob, filename);
+          setDriveStatus('saved');
+        } catch {
+          setDriveStatus('error');
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -37,15 +50,24 @@ export function Gallery({ concepts, dispatch }) {
             {concepts.length} saved {concepts.length === 1 ? 'logo' : 'logos'} · SVG + transparent PNG each
           </p>
         </div>
-        <button
-          onClick={run}
-          disabled={busy}
-          className="flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-          {busy ? 'Preparing ZIP…' : 'Download All — ZIP'}
-        </button>
+        <div className="flex items-center gap-2">
+          <DriveToggle onError={setDriveStatus} />
+          <button
+            onClick={run}
+            disabled={busy}
+            className="flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+            {busy ? 'Preparing ZIP…' : 'Download All — ZIP'}
+          </button>
+        </div>
       </div>
+
+      {driveStatus === 'saving' && <p className="text-[11px] text-slate-400">Saving a copy to Google Drive…</p>}
+      {driveStatus === 'saved' && <p className="text-[11px] text-emerald-400">✓ A copy is safe in your Google Drive</p>}
+      {driveStatus === 'error' && (
+        <p className="text-[11px] text-rose-400">Drive upload failed — reconnect via the toggle and try again.</p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {concepts.map((c) => (

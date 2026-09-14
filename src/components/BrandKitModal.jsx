@@ -4,6 +4,8 @@ import { FONTS, LAYOUTS } from '../data/brand';
 import { fmtColor } from '../lib/color';
 import { downloadBrandKit, downloadSvg, downloadPng } from '../lib/export';
 import { ASSETS, downloadAsset, downloadAllZip } from '../lib/assets';
+import { DriveToggle } from './DriveToggle';
+import { driveEnabled, backupZipToDrive } from '../lib/drive';
 
 const COLOR_KEYS = [
   { k: 'icon', label: 'Primary Mark' },
@@ -35,6 +37,7 @@ const miniBtn =
 
 export function BrandKitModal({ concept, onClose }) {
   const [busy, setBusy] = useState(null);
+  const [driveStatus, setDriveStatus] = useState(null);
   const titleFont = FONTS.find((f) => f.id === concept.titleFont) || FONTS[0];
   const tagFont = FONTS.find((f) => f.id === concept.tagFont) || FONTS[0];
   const layout = LAYOUTS.find((l) => l.id === concept.layout) || LAYOUTS[0];
@@ -123,8 +126,29 @@ export function BrandKitModal({ concept, onClose }) {
         </div>
 
         <div className="space-y-2">
+          <div className="flex items-center justify-center">
+            <DriveToggle onError={setDriveStatus} />
+          </div>
+          {driveStatus === 'saving' && <p className="text-center text-[10px] text-slate-400">Saving a copy to Google Drive…</p>}
+          {driveStatus === 'saved' && <p className="text-center text-[10px] text-emerald-400">✓ A copy is safe in your Google Drive</p>}
+          {driveStatus === 'error' && (
+            <p className="text-center text-[10px] text-rose-400">Drive upload failed — reconnect via the toggle and try again.</p>
+          )}
           <button
-            onClick={() => run('zip', () => downloadAllZip(concept))}
+            onClick={() =>
+              run('zip', async () => {
+                const { blob, filename } = await downloadAllZip(concept);
+                if (driveEnabled()) {
+                  setDriveStatus('saving');
+                  try {
+                    await backupZipToDrive(blob, filename);
+                    setDriveStatus('saved');
+                  } catch {
+                    setDriveStatus('error');
+                  }
+                }
+              })
+            }
             disabled={busy !== null}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
           >
