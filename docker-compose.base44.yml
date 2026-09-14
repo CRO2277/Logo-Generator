@@ -11,6 +11,7 @@ services:
       - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
       - CHOKIDAR_USEPOLLING=true
     env_file:
+      - ./.env.base44-defaults
       - path: /run/base44/app.env
         required: false
     ports:
